@@ -1,12 +1,13 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { serverDb } from '@/lib/server/db';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
-    const store = serverDb.getStore(params.id);
+    const { id } = await props.params;
+    const store = serverDb.getStore(id);
     if (!store) {
       return NextResponse.json({ success: false, error: 'Store not found' }, { status: 404 });
     }
@@ -18,10 +19,11 @@ export async function GET(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = serverDb.deleteStore(params.id);
+    const { id } = await props.params;
+    const success = serverDb.deleteStore(id);
     if (!success) {
       return NextResponse.json({ success: false, error: 'Cannot delete the only remaining store' }, { status: 400 });
     }

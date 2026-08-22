@@ -1,4 +1,4 @@
-import { StoreInfo, ProductItem, ListingItem, OrderEconomics, StoreSettings } from '@/types';
+import { StoreInfo, ProductItem, ListingItem, OrderEconomics, StoreSettings, UserAccount } from '@/types';
 
 export const apiClient = {
   async getStores(): Promise<{ stores: StoreInfo[]; activeStoreId: string }> {
