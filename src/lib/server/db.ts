@@ -14,90 +14,9 @@ import {
 } from '@/types';
 import { INITIAL_STORES } from '@/lib/defaultData';
 import { DEFAULT_SETTINGS } from '@/lib/calculations';
+import { SAAS_PLANS } from '@/lib/saasPlans';
 
-export const SAAS_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
-  trial: {
-    id: 'trial',
-    name: '7-Day Free Trial',
-    tagline: 'Test drive RushNshop with full calculator and live margins',
-    priceMonthly: 0,
-    priceAnnual: 0,
-    maxStores: 1,
-    maxProducts: 20,
-    features: [
-      '1 TikTok Shop Store',
-      'Real-Time Unit Economics Calculator',
-      'Break-Even Ad CPA Analyzer',
-      'Customer Shipping Breakdown',
-      '7 Days Full Platform Access',
-    ],
-  },
-  starter: {
-    id: 'starter',
-    name: 'Starter Merchant',
-    tagline: 'Ideal for solo TikTok Shop dropshippers & creators',
-    priceMonthly: 29,
-    priceAnnual: 24,
-    maxStores: 1,
-    maxProducts: 50,
-    features: [
-      '1 Active TikTok Store',
-      'Full Profit & Margin Calculator',
-      'TikTok Marketplace Fee Engine (10% + 2%)',
-      'Customer vs Seller Shipping Balance',
-      'PDF & CSV Profit Reports',
-      'Standard Email Support',
-    ],
-    badge: 'Most Affordable',
-  },
-  pro: {
-    id: 'pro',
-    name: 'Pro Brand & Seller',
-    tagline: 'For scaling multi-product brands & serious advertisers',
-    priceMonthly: 79,
-    priceAnnual: 64,
-    maxStores: 3,
-    maxProducts: 250,
-    features: [
-      'Up to 3 TikTok Stores (US, UK, Global)',
-      'AI Profit Margin & Pricing Advisor',
-      'CSV Product Bulk Upload',
-      'Spark Ads & TikTok Ad CPA Optimizer',
-      'Multi-Currency Auto-Conversion',
-      'Priority Live Support',
-    ],
-    popular: true,
-    badge: 'Most Popular ⭐',
-  },
-  agency: {
-    id: 'agency',
-    name: 'Agency & Enterprise',
-    tagline: 'For TikTok agencies, aggregators & large brand portfolios',
-    priceMonthly: 199,
-    priceAnnual: 159,
-    maxStores: 10,
-    maxProducts: 9999,
-    features: [
-      'Up to 10 TikTok Stores',
-      'Unlimited Products & SKU Analysis',
-      'Team Access & VA Staff Accounts',
-      'Store-Level Isolation & Locked Profiles',
-      'Automated Profit Auditing',
-      'Dedicated Account Manager',
-    ],
-    badge: 'Agency Scale',
-  },
-  lifetime_owner: {
-    id: 'lifetime_owner',
-    name: 'Master Platform Owner',
-    tagline: 'Super-Admin platform authority',
-    priceMonthly: 0,
-    priceAnnual: 0,
-    maxStores: 999,
-    maxProducts: 99999,
-    features: ['Unlimited Stores', 'Tenant SaaS Management', 'Global MRR Analytics'],
-  },
-};
+export { SAAS_PLANS };
 
 export const DEFAULT_USERS: UserAccount[] = [
   {

@@ -36,7 +36,7 @@ import {
 import { useStore } from '@/context/StoreContext';
 import { useAuth } from '@/context/AuthContext';
 import { StoreSettings, UserRole, SubscriptionTier } from '@/types';
-import { SAAS_PLANS } from '@/lib/server/db';
+import { SAAS_PLANS } from '@/lib/saasPlans';
 import { apiClient } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import AddStoreModal from '@/components/layout/AddStoreModal';

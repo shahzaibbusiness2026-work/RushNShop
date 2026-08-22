@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useStore } from '@/context/StoreContext';
-import { SAAS_PLANS } from '@/lib/server/db';
+import { SAAS_PLANS } from '@/lib/saasPlans';
 import { SubscriptionTier } from '@/types';
 import { cn } from '@/lib/utils';
 
