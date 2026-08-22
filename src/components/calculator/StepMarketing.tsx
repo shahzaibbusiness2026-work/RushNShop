@@ -37,8 +37,11 @@ export default function StepMarketing({ onNext, onBack }: StepMarketingProps) {
               step="0.1"
               min="0"
               placeholder="3.50"
-              value={currentCalculator.tiktokAdsCost ?? ''}
-              onChange={(e) => updateCalculator({ tiktokAdsCost: parseFloat(e.target.value) || 0 })}
+              value={currentCalculator.tiktokAdsCost === undefined || currentCalculator.tiktokAdsCost === null ? '' : currentCalculator.tiktokAdsCost}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateCalculator({ tiktokAdsCost: v === '' ? ('' as any) : parseFloat(v) });
+              }}
               className="w-full pl-8 pr-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-colors"
             />
           </div>
@@ -62,8 +65,11 @@ export default function StepMarketing({ onNext, onBack }: StepMarketingProps) {
               step="0.1"
               min="0"
               placeholder="0.00"
-              value={currentCalculator.creatorCost ?? ''}
-              onChange={(e) => updateCalculator({ creatorCost: parseFloat(e.target.value) || 0 })}
+              value={currentCalculator.creatorCost === undefined || currentCalculator.creatorCost === null ? '' : currentCalculator.creatorCost}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateCalculator({ creatorCost: v === '' ? ('' as any) : parseFloat(v) });
+              }}
               className="w-full pl-8 pr-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-colors"
             />
           </div>
@@ -85,8 +91,11 @@ export default function StepMarketing({ onNext, onBack }: StepMarketingProps) {
               step="0.1"
               min="0"
               placeholder="0.00"
-              value={currentCalculator.otherMarketingCost ?? ''}
-              onChange={(e) => updateCalculator({ otherMarketingCost: parseFloat(e.target.value) || 0 })}
+              value={currentCalculator.otherMarketingCost === undefined || currentCalculator.otherMarketingCost === null ? '' : currentCalculator.otherMarketingCost}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateCalculator({ otherMarketingCost: v === '' ? ('' as any) : parseFloat(v) });
+              }}
               className="w-full pl-8 pr-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-colors"
             />
           </div>
@@ -108,8 +117,11 @@ export default function StepMarketing({ onNext, onBack }: StepMarketingProps) {
               step="0.1"
               min="0"
               placeholder="0.00"
-              value={currentCalculator.customExpenses ?? ''}
-              onChange={(e) => updateCalculator({ customExpenses: parseFloat(e.target.value) || 0 })}
+              value={currentCalculator.customExpenses === undefined || currentCalculator.customExpenses === null ? '' : currentCalculator.customExpenses}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateCalculator({ customExpenses: v === '' ? ('' as any) : parseFloat(v) });
+              }}
               className="w-full pl-8 pr-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-colors"
             />
           </div>

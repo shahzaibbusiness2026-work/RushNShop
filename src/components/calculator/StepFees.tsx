@@ -44,8 +44,11 @@ export default function StepFees({ onNext, onBack }: StepFeesProps) {
               step="0.1"
               min="0"
               placeholder="10.0"
-              value={currentCalculator.tiktokCommissionPercent ?? settings.tiktokCommissionPercent}
-              onChange={(e) => updateCalculator({ tiktokCommissionPercent: parseFloat(e.target.value) || 0 })}
+              value={currentCalculator.tiktokCommissionPercent === undefined || currentCalculator.tiktokCommissionPercent === null ? '' : currentCalculator.tiktokCommissionPercent}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateCalculator({ tiktokCommissionPercent: v === '' ? ('' as any) : parseFloat(v) });
+              }}
               className="w-full pr-8 pl-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-colors"
             />
             <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">%</span>
@@ -70,8 +73,11 @@ export default function StepFees({ onNext, onBack }: StepFeesProps) {
               step="0.1"
               min="0"
               placeholder="2.0"
-              value={currentCalculator.transactionFeePercent ?? settings.transactionFeePercent}
-              onChange={(e) => updateCalculator({ transactionFeePercent: parseFloat(e.target.value) || 0 })}
+              value={currentCalculator.transactionFeePercent === undefined || currentCalculator.transactionFeePercent === null ? '' : currentCalculator.transactionFeePercent}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateCalculator({ transactionFeePercent: v === '' ? ('' as any) : parseFloat(v) });
+              }}
               className="w-full pr-8 pl-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-colors"
             />
             <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">%</span>
@@ -96,8 +102,11 @@ export default function StepFees({ onNext, onBack }: StepFeesProps) {
               step="0.5"
               min="0"
               placeholder="5.0"
-              value={currentCalculator.affiliatePercent ?? settings.defaultAffiliatePercent}
-              onChange={(e) => updateCalculator({ affiliatePercent: parseFloat(e.target.value) || 0 })}
+              value={currentCalculator.affiliatePercent === undefined || currentCalculator.affiliatePercent === null ? '' : currentCalculator.affiliatePercent}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateCalculator({ affiliatePercent: v === '' ? ('' as any) : parseFloat(v) });
+              }}
               className="w-full pr-8 pl-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-colors"
             />
             <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">%</span>

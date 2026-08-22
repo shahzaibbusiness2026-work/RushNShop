@@ -38,8 +38,11 @@ export default function StepCosts({ onNext, onBack }: StepCostsProps) {
               step="0.01"
               min="0"
               placeholder="29.99"
-              value={currentCalculator.sellingPrice ?? ''}
-              onChange={(e) => updateCalculator({ sellingPrice: parseFloat(e.target.value) || 0 })}
+              value={currentCalculator.sellingPrice === undefined || currentCalculator.sellingPrice === null ? '' : currentCalculator.sellingPrice}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateCalculator({ sellingPrice: v === '' ? ('' as any) : parseFloat(v) });
+              }}
               className="w-full pl-8 pr-4 py-3 bg-white dark:bg-slate-900 border border-brand-200 dark:border-brand-800 rounded-xl text-lg font-black text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-2xs"
             />
           </div>
@@ -60,8 +63,11 @@ export default function StepCosts({ onNext, onBack }: StepCostsProps) {
               step="0.01"
               min="0"
               placeholder="9.00"
-              value={currentCalculator.costPrice ?? ''}
-              onChange={(e) => updateCalculator({ costPrice: parseFloat(e.target.value) || 0 })}
+              value={currentCalculator.costPrice === undefined || currentCalculator.costPrice === null ? '' : currentCalculator.costPrice}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateCalculator({ costPrice: v === '' ? ('' as any) : parseFloat(v) });
+              }}
               className="w-full pl-8 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-colors"
             />
           </div>
@@ -83,8 +89,11 @@ export default function StepCosts({ onNext, onBack }: StepCostsProps) {
               step="0.01"
               min="0"
               placeholder="1.00"
-              value={currentCalculator.packagingCost ?? settings.defaultPackagingCost}
-              onChange={(e) => updateCalculator({ packagingCost: parseFloat(e.target.value) || 0 })}
+              value={currentCalculator.packagingCost === undefined || currentCalculator.packagingCost === null ? '' : currentCalculator.packagingCost}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateCalculator({ packagingCost: v === '' ? ('' as any) : parseFloat(v) });
+              }}
               className="w-full pl-8 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-colors"
             />
           </div>
@@ -137,8 +146,11 @@ export default function StepCosts({ onNext, onBack }: StepCostsProps) {
                   step="0.01"
                   min="0"
                   placeholder="2.50"
-                  value={currentCalculator.shippingCost ?? settings.defaultShippingCost}
-                  onChange={(e) => updateCalculator({ shippingCost: parseFloat(e.target.value) || 0 })}
+                  value={currentCalculator.shippingCost === undefined || currentCalculator.shippingCost === null ? '' : currentCalculator.shippingCost}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    updateCalculator({ shippingCost: v === '' ? ('' as any) : parseFloat(v) });
+                  }}
                   className="w-full pl-8 pr-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                 />
               </div>
@@ -159,8 +171,11 @@ export default function StepCosts({ onNext, onBack }: StepCostsProps) {
                   step="0.01"
                   min="0"
                   placeholder="0.00"
-                  value={currentCalculator.shippingCharge ?? ''}
-                  onChange={(e) => updateCalculator({ shippingCharge: parseFloat(e.target.value) || 0 })}
+                  value={currentCalculator.shippingCharge === undefined || currentCalculator.shippingCharge === null ? '' : currentCalculator.shippingCharge}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    updateCalculator({ shippingCharge: v === '' ? ('' as any) : parseFloat(v) });
+                  }}
                   className="w-full pl-8 pr-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                 />
               </div>
@@ -186,8 +201,11 @@ export default function StepCosts({ onNext, onBack }: StepCostsProps) {
               step="0.01"
               min="0"
               placeholder="0.00"
-              value={currentCalculator.otherProductCost ?? ''}
-              onChange={(e) => updateCalculator({ otherProductCost: parseFloat(e.target.value) || 0 })}
+              value={currentCalculator.otherProductCost === undefined || currentCalculator.otherProductCost === null ? '' : currentCalculator.otherProductCost}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateCalculator({ otherProductCost: v === '' ? ('' as any) : parseFloat(v) });
+              }}
               className="w-full pl-8 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-colors"
             />
           </div>

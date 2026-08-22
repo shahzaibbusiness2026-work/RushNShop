@@ -899,5 +899,33 @@
     }
   ],
   "activeStoreId": "store-1",
-  "updatedAt": "2026-08-22T06:45:21.690Z"
+  "updatedAt": "2026-08-22T20:02:55.061Z",
+  "users": [
+    {
+      "id": "user-admin",
+      "name": "Admin Owner",
+      "email": "admin@rushnshop.com",
+      "password": "admin123",
+      "role": "owner",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "assignedStoreIds": [
+        "*"
+      ],
+      "isLocked": false,
+      "createdAt": "2026-08-22T19:58:51.692Z"
+    },
+    {
+      "id": "user-manager",
+      "name": "TikTok Store Manager",
+      "email": "manager@rushnshop.com",
+      "password": "manager123",
+      "role": "store_manager",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "assignedStoreIds": [
+        "store-1"
+      ],
+      "isLocked": false,
+      "createdAt": "2026-08-22T19:58:51.692Z"
+    }
+  ]
 }

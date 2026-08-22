@@ -71,7 +71,18 @@ export default function SettingsPage() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    updateSettings(formData);
+    const cleaned: StoreSettings = {
+      ...formData,
+      tiktokCommissionPercent: Number(formData.tiktokCommissionPercent) || 0,
+      defaultShippingCost: Number(formData.defaultShippingCost) || 0,
+      defaultPackagingCost: Number(formData.defaultPackagingCost) || 0,
+      transactionFeePercent: Number(formData.transactionFeePercent) || 0,
+      defaultAffiliatePercent: Number(formData.defaultAffiliatePercent) || 0,
+      targetProfitMarginPercent: Number(formData.targetProfitMarginPercent) || 30,
+      minimumAcceptableProfit: Number(formData.minimumAcceptableProfit) || 5,
+      lowMarginThresholdPercent: Number(formData.lowMarginThresholdPercent) || 15,
+    };
+    updateSettings(cleaned);
   };
 
   const handleReset = () => {
@@ -501,8 +512,12 @@ export default function SettingsPage() {
                       type="number"
                       step="0.1"
                       min="0"
-                      value={formData.tiktokCommissionPercent}
-                      onChange={(e) => handleInputChange('tiktokCommissionPercent', parseFloat(e.target.value) || 0)}
+                      placeholder="10.0"
+                      value={formData.tiktokCommissionPercent === undefined || formData.tiktokCommissionPercent === null ? '' : formData.tiktokCommissionPercent}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        handleInputChange('tiktokCommissionPercent', v === '' ? ('' as any) : parseFloat(v));
+                      }}
                       className="w-full pr-8 pl-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white text-right focus:outline-none focus:border-brand-500"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">%</span>
@@ -521,8 +536,12 @@ export default function SettingsPage() {
                       type="number"
                       step="0.1"
                       min="0"
-                      value={formData.defaultShippingCost}
-                      onChange={(e) => handleInputChange('defaultShippingCost', parseFloat(e.target.value) || 0)}
+                      placeholder="2.50"
+                      value={formData.defaultShippingCost === undefined || formData.defaultShippingCost === null ? '' : formData.defaultShippingCost}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        handleInputChange('defaultShippingCost', v === '' ? ('' as any) : parseFloat(v));
+                      }}
                       className="w-full pl-7 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white text-right focus:outline-none focus:border-brand-500"
                     />
                   </div>
@@ -540,8 +559,12 @@ export default function SettingsPage() {
                       type="number"
                       step="0.1"
                       min="0"
-                      value={formData.defaultPackagingCost}
-                      onChange={(e) => handleInputChange('defaultPackagingCost', parseFloat(e.target.value) || 0)}
+                      placeholder="1.00"
+                      value={formData.defaultPackagingCost === undefined || formData.defaultPackagingCost === null ? '' : formData.defaultPackagingCost}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        handleInputChange('defaultPackagingCost', v === '' ? ('' as any) : parseFloat(v));
+                      }}
                       className="w-full pl-7 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white text-right focus:outline-none focus:border-brand-500"
                     />
                   </div>
@@ -558,8 +581,12 @@ export default function SettingsPage() {
                       type="number"
                       step="0.1"
                       min="0"
-                      value={formData.transactionFeePercent}
-                      onChange={(e) => handleInputChange('transactionFeePercent', parseFloat(e.target.value) || 0)}
+                      placeholder="2.0"
+                      value={formData.transactionFeePercent === undefined || formData.transactionFeePercent === null ? '' : formData.transactionFeePercent}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        handleInputChange('transactionFeePercent', v === '' ? ('' as any) : parseFloat(v));
+                      }}
                       className="w-full pr-8 pl-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white text-right focus:outline-none focus:border-brand-500"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">%</span>
@@ -577,8 +604,12 @@ export default function SettingsPage() {
                       type="number"
                       step="0.5"
                       min="0"
-                      value={formData.defaultAffiliatePercent}
-                      onChange={(e) => handleInputChange('defaultAffiliatePercent', parseFloat(e.target.value) || 0)}
+                      placeholder="5.0"
+                      value={formData.defaultAffiliatePercent === undefined || formData.defaultAffiliatePercent === null ? '' : formData.defaultAffiliatePercent}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        handleInputChange('defaultAffiliatePercent', v === '' ? ('' as any) : parseFloat(v));
+                      }}
                       className="w-full pr-8 pl-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white text-right focus:outline-none focus:border-brand-500"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">%</span>
@@ -609,8 +640,12 @@ export default function SettingsPage() {
                       step="1"
                       min="1"
                       max="90"
-                      value={formData.targetProfitMarginPercent}
-                      onChange={(e) => handleInputChange('targetProfitMarginPercent', parseFloat(e.target.value) || 0)}
+                      placeholder="30"
+                      value={formData.targetProfitMarginPercent === undefined || formData.targetProfitMarginPercent === null ? '' : formData.targetProfitMarginPercent}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        handleInputChange('targetProfitMarginPercent', v === '' ? ('' as any) : parseFloat(v));
+                      }}
                       className="w-full pr-8 pl-3 py-2 bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs font-bold text-emerald-900 dark:text-emerald-200 text-right focus:outline-none focus:border-emerald-500"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600 dark:text-emerald-400 text-xs font-bold">%</span>
@@ -629,8 +664,12 @@ export default function SettingsPage() {
                       type="number"
                       step="0.5"
                       min="0"
-                      value={formData.minimumAcceptableProfit}
-                      onChange={(e) => handleInputChange('minimumAcceptableProfit', parseFloat(e.target.value) || 0)}
+                      placeholder="5.00"
+                      value={formData.minimumAcceptableProfit === undefined || formData.minimumAcceptableProfit === null ? '' : formData.minimumAcceptableProfit}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        handleInputChange('minimumAcceptableProfit', v === '' ? ('' as any) : parseFloat(v));
+                      }}
                       className="w-full pl-7 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white text-right focus:outline-none focus:border-brand-500"
                     />
                   </div>
@@ -647,8 +686,12 @@ export default function SettingsPage() {
                       type="number"
                       step="1"
                       min="0"
-                      value={formData.lowMarginThresholdPercent}
-                      onChange={(e) => handleInputChange('lowMarginThresholdPercent', parseFloat(e.target.value) || 0)}
+                      placeholder="15"
+                      value={formData.lowMarginThresholdPercent === undefined || formData.lowMarginThresholdPercent === null ? '' : formData.lowMarginThresholdPercent}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        handleInputChange('lowMarginThresholdPercent', v === '' ? ('' as any) : parseFloat(v));
+                      }}
                       className="w-full pr-8 pl-3 py-2 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-xl text-xs font-bold text-amber-900 dark:text-amber-200 text-right focus:outline-none focus:border-amber-500"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-600 dark:text-amber-400 text-xs font-bold">%</span>
