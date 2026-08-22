@@ -20,7 +20,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Zap
 } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { cn } from '@/lib/utils';
@@ -48,6 +49,7 @@ export default function Sidebar({
     { name: 'Listings', href: '/listings', icon: Tag },
     { name: 'Orders', href: '/orders', icon: ShoppingBag },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+    { name: 'Pricing & Plans', href: '/pricing', icon: Zap },
     { name: 'Settings', href: '/settings', icon: Settings },
     { name: 'Help Center', href: '/help', icon: HelpCircle },
   ];

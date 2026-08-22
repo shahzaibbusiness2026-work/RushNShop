@@ -179,6 +179,26 @@ export const apiClient = {
     }
     const data = await res.json();
     return data.user;
+  },
+
+  async getBillingInfo(userId?: string) {
+    const url = userId ? `/api/billing?userId=${userId}` : '/api/billing';
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed fetching billing info');
+    return res.json();
+  },
+
+  async upgradeSubscription(userId: string, tier: string, billingInterval: 'monthly' | 'annual' = 'monthly') {
+    const res = await fetch('/api/billing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, tier, billingInterval }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed upgrading subscription' }));
+      throw new Error(err.message || 'Failed upgrading subscription');
+    }
+    return res.json();
   }
 };
 

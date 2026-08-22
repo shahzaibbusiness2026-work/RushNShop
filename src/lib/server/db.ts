@@ -1,29 +1,138 @@
 import fs from 'fs';
 import path from 'path';
-import { StoreInfo, ProductItem, ListingItem, OrderEconomics, StoreSettings, MonthlyDataPoint, UserAccount } from '@/types';
+import { 
+  StoreInfo, 
+  ProductItem, 
+  ListingItem, 
+  OrderEconomics, 
+  StoreSettings, 
+  MonthlyDataPoint, 
+  UserAccount,
+  SubscriptionTier,
+  SubscriptionPlan,
+  SaaSMetrics
+} from '@/types';
 import { INITIAL_STORES } from '@/lib/defaultData';
 import { DEFAULT_SETTINGS } from '@/lib/calculations';
+
+export const SAAS_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
+  trial: {
+    id: 'trial',
+    name: '7-Day Free Trial',
+    tagline: 'Test drive RushNshop with full calculator and live margins',
+    priceMonthly: 0,
+    priceAnnual: 0,
+    maxStores: 1,
+    maxProducts: 20,
+    features: [
+      '1 TikTok Shop Store',
+      'Real-Time Unit Economics Calculator',
+      'Break-Even Ad CPA Analyzer',
+      'Customer Shipping Breakdown',
+      '7 Days Full Platform Access',
+    ],
+  },
+  starter: {
+    id: 'starter',
+    name: 'Starter Merchant',
+    tagline: 'Ideal for solo TikTok Shop dropshippers & creators',
+    priceMonthly: 29,
+    priceAnnual: 24,
+    maxStores: 1,
+    maxProducts: 50,
+    features: [
+      '1 Active TikTok Store',
+      'Full Profit & Margin Calculator',
+      'TikTok Marketplace Fee Engine (10% + 2%)',
+      'Customer vs Seller Shipping Balance',
+      'PDF & CSV Profit Reports',
+      'Standard Email Support',
+    ],
+    badge: 'Most Affordable',
+  },
+  pro: {
+    id: 'pro',
+    name: 'Pro Brand & Seller',
+    tagline: 'For scaling multi-product brands & serious advertisers',
+    priceMonthly: 79,
+    priceAnnual: 64,
+    maxStores: 3,
+    maxProducts: 250,
+    features: [
+      'Up to 3 TikTok Stores (US, UK, Global)',
+      'AI Profit Margin & Pricing Advisor',
+      'CSV Product Bulk Upload',
+      'Spark Ads & TikTok Ad CPA Optimizer',
+      'Multi-Currency Auto-Conversion',
+      'Priority Live Support',
+    ],
+    popular: true,
+    badge: 'Most Popular ⭐',
+  },
+  agency: {
+    id: 'agency',
+    name: 'Agency & Enterprise',
+    tagline: 'For TikTok agencies, aggregators & large brand portfolios',
+    priceMonthly: 199,
+    priceAnnual: 159,
+    maxStores: 10,
+    maxProducts: 9999,
+    features: [
+      'Up to 10 TikTok Stores',
+      'Unlimited Products & SKU Analysis',
+      'Team Access & VA Staff Accounts',
+      'Store-Level Isolation & Locked Profiles',
+      'Automated Profit Auditing',
+      'Dedicated Account Manager',
+    ],
+    badge: 'Agency Scale',
+  },
+  lifetime_owner: {
+    id: 'lifetime_owner',
+    name: 'Master Platform Owner',
+    tagline: 'Super-Admin platform authority',
+    priceMonthly: 0,
+    priceAnnual: 0,
+    maxStores: 999,
+    maxProducts: 99999,
+    features: ['Unlimited Stores', 'Tenant SaaS Management', 'Global MRR Analytics'],
+  },
+};
 
 export const DEFAULT_USERS: UserAccount[] = [
   {
     id: 'user-admin',
+    organizationId: 'org-owner',
     name: 'Admin Owner',
     email: 'admin@rushnshop.com',
     password: 'admin123',
     role: 'owner',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     assignedStoreIds: ['*'],
+    subscription: {
+      tier: 'lifetime_owner',
+      status: 'active',
+      maxStores: 999,
+      maxProducts: 99999,
+    },
     isLocked: false,
     createdAt: new Date().toISOString(),
   },
   {
     id: 'user-manager',
+    organizationId: 'org-owner',
     name: 'TikTok Store Manager',
     email: 'manager@rushnshop.com',
     password: 'manager123',
     role: 'store_manager',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     assignedStoreIds: ['store-1'],
+    subscription: {
+      tier: 'pro',
+      status: 'active',
+      maxStores: 3,
+      maxProducts: 250,
+    },
     isLocked: false,
     createdAt: new Date().toISOString(),
   },
@@ -130,9 +239,12 @@ export const serverDb = {
     return ensureDbFile();
   },
 
-  getStores(): StoreInfo[] {
+  getStores(organizationId?: string, isOwner?: boolean): StoreInfo[] {
     const db = ensureDbFile();
-    return db.stores;
+    if (isOwner || !organizationId) {
+      return db.stores;
+    }
+    return db.stores.filter(s => s.organizationId === organizationId);
   },
 
   getActiveStoreId(): string {
@@ -159,6 +271,7 @@ export const serverDb = {
     currencySymbol?: string;
     tiktokCommissionPercent?: number;
     withDemoData?: boolean;
+    organizationId?: string;
   }): StoreInfo {
     const db = ensureDbFile();
     const newId = `store-${Date.now()}`;
@@ -271,6 +384,7 @@ export const serverDb = {
 
     const newStore: StoreInfo = {
       id: newId,
+      organizationId: payload.organizationId || 'org-owner',
       name: payload.name,
       handle: payload.handle || `@${payload.name.toLowerCase().replace(/\s+/g, '')}`,
       region: payload.region,
@@ -301,62 +415,69 @@ export const serverDb = {
   },
 
   // Products
-  getProducts(storeId?: string): ProductItem[] {
-    const db = ensureDbFile();
-    const targetId = storeId || db.activeStoreId;
-    const store = db.stores.find(s => s.id === targetId) || db.stores[0];
-    return store ? store.products : [];
+  getProducts(storeId: string): ProductItem[] {
+    const store = this.getStore(storeId);
+    return store?.products || [];
   },
 
   saveProduct(storeId: string, product: Partial<ProductItem>): ProductItem {
     const db = ensureDbFile();
-    const store = db.stores.find(s => s.id === storeId) || db.stores[0];
-    if (!store) throw new Error('Store not found');
+    const store = db.stores.find(s => s.id === storeId);
+    if (!store) throw new Error(`Store with id ${storeId} not found`);
 
     const now = new Date().toISOString().split('T')[0];
-    const existingIndex = store.products.findIndex(p => p.id === product.id);
+    let saved: ProductItem;
 
-    let savedItem: ProductItem;
-
-    if (existingIndex >= 0 && product.id) {
-      savedItem = {
-        ...store.products[existingIndex],
-        ...product,
-        updatedAt: now,
-      } as ProductItem;
-      store.products[existingIndex] = savedItem;
+    if (product.id) {
+      const idx = store.products.findIndex(p => p.id === product.id);
+      if (idx >= 0) {
+        saved = {
+          ...store.products[idx],
+          ...product,
+          updatedAt: now,
+        } as ProductItem;
+        store.products[idx] = saved;
+      } else {
+        saved = {
+          ...product,
+          id: product.id,
+          createdAt: now,
+          updatedAt: now,
+        } as ProductItem;
+        store.products.push(saved);
+      }
     } else {
-      savedItem = {
-        id: `prod-${Date.now()}`,
-        name: product.name || 'Untitled Product',
-        sku: product.sku || `SKU-${Math.floor(1000 + Math.random() * 9000)}`,
+      saved = {
+        id: `prod-${storeId}-${Date.now()}`,
+        name: product.name || 'New TikTok Product',
+        sku: product.sku || `SKU-${Date.now().toString().slice(-4)}`,
         category: product.category || 'General',
         image: product.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&auto=format&fit=crop&q=80',
         costPrice: Number(product.costPrice) || 0,
         shippingCost: Number(product.shippingCost ?? store.settings.defaultShippingCost) || 0,
-        shippingCharge: Number(product.shippingCharge ?? store.settings.defaultShippingCharge ?? 0) || 0,
+        shippingCharge: Number(product.shippingCharge) || 0,
         packagingCost: Number(product.packagingCost ?? store.settings.defaultPackagingCost) || 0,
         otherProductCost: Number(product.otherProductCost) || 0,
-        tiktokCommissionPercent: Number(product.tiktokCommissionPercent ?? store.settings.tiktokCommissionPercent) || 0,
-        transactionFeePercent: Number(product.transactionFeePercent ?? store.settings.transactionFeePercent) || 0,
-        affiliatePercent: Number(product.affiliatePercent ?? store.settings.defaultAffiliatePercent) || 0,
+        tiktokCommissionPercent: Number(product.tiktokCommissionPercent ?? store.settings.tiktokCommissionPercent) || 10,
+        transactionFeePercent: Number(product.transactionFeePercent ?? store.settings.transactionFeePercent) || 2,
+        affiliatePercent: Number(product.affiliatePercent ?? store.settings.defaultAffiliatePercent) || 5,
         tiktokAdsCost: Number(product.tiktokAdsCost) || 0,
         creatorCost: Number(product.creatorCost) || 0,
         otherMarketingCost: Number(product.otherMarketingCost) || 0,
         customExpenses: Number(product.customExpenses) || 0,
-        sellingPrice: Number(product.sellingPrice) || 0,
+        sellingPrice: Number(product.sellingPrice) || 29.99,
         createdAt: now,
         updatedAt: now,
         status: product.status || 'good',
-        bestFor: product.bestFor || 'Standard',
-        notes: product.notes || '',
-        inComparison: false,
+        bestFor: product.bestFor,
+        notes: product.notes,
+        inComparison: product.inComparison ?? true,
       };
-      store.products.unshift(savedItem);
+      store.products.unshift(saved);
     }
 
     writeDb(db);
-    return savedItem;
+    return saved;
   },
 
   deleteProduct(storeId: string, productId: string): boolean {
@@ -369,21 +490,19 @@ export const serverDb = {
   },
 
   // Listings
-  getListings(storeId?: string): ListingItem[] {
-    const db = ensureDbFile();
-    const targetId = storeId || db.activeStoreId;
-    const store = db.stores.find(s => s.id === targetId) || db.stores[0];
-    return store ? store.listings : [];
+  getListings(storeId: string): ListingItem[] {
+    const store = this.getStore(storeId);
+    return store?.listings || [];
   },
 
   saveListing(storeId: string, listing: ListingItem): ListingItem {
     const db = ensureDbFile();
-    const store = db.stores.find(s => s.id === storeId) || db.stores[0];
-    if (!store) throw new Error('Store not found');
+    const store = db.stores.find(s => s.id === storeId);
+    if (!store) throw new Error(`Store with id ${storeId} not found`);
 
-    const existingIndex = store.listings.findIndex(l => l.id === listing.id);
-    if (existingIndex >= 0) {
-      store.listings[existingIndex] = listing;
+    const idx = store.listings.findIndex(l => l.id === listing.id);
+    if (idx >= 0) {
+      store.listings[idx] = listing;
     } else {
       store.listings.unshift(listing);
     }
@@ -410,6 +529,25 @@ export const serverDb = {
   },
 
   // Settings
+  getSettings(storeId: string): StoreSettings {
+    const store = this.getStore(storeId);
+    return store?.settings || DEFAULT_SETTINGS;
+  },
+
+  saveSettings(storeId: string, newSettings: Partial<StoreSettings>): StoreSettings {
+    const db = ensureDbFile();
+    const store = db.stores.find(s => s.id === storeId);
+    if (!store) throw new Error(`Store with id ${storeId} not found`);
+
+    store.settings = {
+      ...store.settings,
+      ...newSettings,
+    };
+
+    writeDb(db);
+    return store.settings;
+  },
+
   updateSettings(storeId: string, newSettings: Partial<StoreSettings>): StoreSettings {
     const db = ensureDbFile();
     const store = db.stores.find(s => s.id === storeId) || db.stores[0];
@@ -449,6 +587,9 @@ export const serverDb = {
       ? db.users.findIndex(u => u.id === userData.id)
       : db.users.findIndex(u => u.email.toLowerCase() === (userData.email || '').toLowerCase());
 
+    const planTier: SubscriptionTier = userData.role === 'owner' ? 'lifetime_owner' : 'starter';
+    const planInfo = SAAS_PLANS[planTier];
+
     if (existingIndex >= 0) {
       savedUser = {
         ...db.users[existingIndex],
@@ -458,12 +599,20 @@ export const serverDb = {
     } else {
       savedUser = {
         id: userData.id || `user-${Date.now()}`,
-        name: userData.name || 'Team Member',
+        organizationId: userData.organizationId || `org-${Date.now()}`,
+        name: userData.name || 'Merchant User',
         email: (userData.email || '').toLowerCase().trim(),
         password: userData.password || 'password123',
         role: userData.role || 'store_manager',
         avatar: userData.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name || 'Member')}`,
         assignedStoreIds: userData.assignedStoreIds || ['*'],
+        subscription: userData.subscription || {
+          tier: planTier,
+          status: 'active',
+          maxStores: planInfo.maxStores,
+          maxProducts: planInfo.maxProducts,
+          billingInterval: 'monthly',
+        },
         isLocked: userData.isLocked || false,
         createdAt: now,
       };
@@ -495,5 +644,65 @@ export const serverDb = {
       writeDb(db);
     }
     return user;
+  },
+
+  updateUserSubscription(
+    userId: string, 
+    tier: SubscriptionTier, 
+    status: 'active' | 'trialing' | 'past_due' | 'canceled' = 'active',
+    billingInterval: 'monthly' | 'annual' = 'monthly'
+  ): UserAccount | undefined {
+    const db = ensureDbFile();
+    const user = db.users.find(u => u.id === userId);
+    if (!user) return undefined;
+
+    const plan = SAAS_PLANS[tier] || SAAS_PLANS.starter;
+    user.subscription = {
+      tier,
+      status,
+      maxStores: plan.maxStores,
+      maxProducts: plan.maxProducts,
+      billingInterval,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+
+    writeDb(db);
+    return user;
+  },
+
+  getSaaSMetrics(): SaaSMetrics {
+    const db = ensureDbFile();
+    let totalMRR = 0;
+    let activeSubscribers = 0;
+    const planBreakdown = { starter: 0, pro: 0, agency: 0, trial: 0 };
+
+    for (const user of db.users) {
+      if (user.role === 'owner') continue;
+      const sub = user.subscription;
+      if (!sub) continue;
+
+      if (sub.status === 'active' || sub.status === 'trialing') {
+        activeSubscribers++;
+        if (sub.tier === 'starter') {
+          totalMRR += 29;
+          planBreakdown.starter++;
+        } else if (sub.tier === 'pro') {
+          totalMRR += 79;
+          planBreakdown.pro++;
+        } else if (sub.tier === 'agency') {
+          totalMRR += 199;
+          planBreakdown.agency++;
+        } else if (sub.tier === 'trial') {
+          planBreakdown.trial++;
+        }
+      }
+    }
+
+    return {
+      totalMRR,
+      activeSubscribers,
+      planBreakdown,
+      totalStores: db.stores.length,
+    };
   }
 };

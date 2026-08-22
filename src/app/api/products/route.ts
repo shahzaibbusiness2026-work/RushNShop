@@ -1,10 +1,10 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { serverDb } from '@/lib/server/db';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const storeId = searchParams.get('storeId') || undefined;
+    const storeId = searchParams.get('storeId') || serverDb.getActiveStoreId();
     const products = serverDb.getProducts(storeId);
     return NextResponse.json({ success: true, products });
   } catch (error: any) {

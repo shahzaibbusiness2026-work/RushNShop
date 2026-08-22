@@ -23,11 +23,21 @@ import {
   UserPlus,
   Shield,
   Mail,
-  Key
+  Key,
+  CreditCard,
+  Zap,
+  TrendingUp,
+  Crown,
+  ExternalLink,
+  RotateCw,
+  Building2,
+  Layers
 } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { useAuth } from '@/context/AuthContext';
-import { StoreSettings, UserRole } from '@/types';
+import { StoreSettings, UserRole, SubscriptionTier } from '@/types';
+import { SAAS_PLANS } from '@/lib/server/db';
+import { apiClient } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import AddStoreModal from '@/components/layout/AddStoreModal';
 import AddUserModal from '@/components/team/AddUserModal';
@@ -47,16 +57,23 @@ export default function SettingsPage() {
   const {
     currentUser,
     users,
+    metrics,
     deleteUser,
     toggleLockUser,
+    upgradePlan,
+    refreshMetrics,
     canManageUsers,
+    currentPlanTier,
+    planMaxStores,
+    setUpgradeModalOpen,
     isOwner
   } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'stores' | 'team' | 'costs' | 'rules' | 'ai'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'stores' | 'team' | 'billing' | 'saas_hub' | 'costs' | 'rules' | 'ai'>('general');
   const [formData, setFormData] = useState<StoreSettings>({ ...settings });
   const [addStoreModalOpen, setAddStoreModalOpen] = useState(false);
   const [addUserModalOpen, setAddUserModalOpen] = useState(false);
+  const [isUpgradingUser, setIsUpgradingUser] = useState<string | null>(null);
 
   React.useEffect(() => {
     setFormData({ ...settings });
@@ -124,10 +141,12 @@ export default function SettingsPage() {
   const tabs = [
     { id: 'general', label: 'General' },
     { id: 'stores', label: `Stores (${stores.length})` },
-    { id: 'team', label: `Users & Team (${users.length})` },
+    { id: 'team', label: `Team (${users.length})` },
+    { id: 'billing', label: 'Subscription & Quotas' },
+    ...(isOwner ? [{ id: 'saas_hub', label: '👑 SaaS Platform Hub' }] : []),
     { id: 'costs', label: 'Costs & Fees' },
     { id: 'rules', label: 'Profit Rules' },
-    { id: 'ai', label: 'AI Settings' },
+    { id: 'ai', label: 'AI Advisor' },
   ];
 
   return (
@@ -490,7 +509,311 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* 2. COSTS & FEES TAB */}
+          {/* 3. SUBSCRIPTION & BILLING TAB */}
+          {activeTab === 'billing' && (
+            <div className="space-y-6 max-w-3xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>Active Subscription Plan</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800 uppercase">
+                      {isOwner ? '👑 Lifetime Master' : `${currentPlanTier} Plan`}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Manage your TikTok Shop store quotas, billing interval, and receipts.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setUpgradeModalOpen(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 self-start sm:self-auto transition-all"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{isOwner ? 'Manage Master Plan' : '⚡ Upgrade / Change Plan'}</span>
+                </button>
+              </div>
+
+              {/* Plan Overview Card */}
+              <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-brand-50/50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-850 border border-brand-100/80 dark:border-slate-800 shadow-xs space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-sm shadow-brand-500/20">
+                      <Zap className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-base text-slate-900 dark:text-white">
+                        {isOwner ? 'Master Platform Owner Access' : SAAS_PLANS[currentPlanTier]?.name}
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {isOwner 
+                          ? 'Unlimited TikTok stores and administrative authority' 
+                          : `$${SAAS_PLANS[currentPlanTier]?.priceMonthly || 0}/month • Renews automatically`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-left sm:text-right">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      ● Active Subscription
+                    </span>
+                  </div>
+                </div>
+
+                {/* Quota Gauges */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Store Quota */}
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700">
+                    <div className="flex items-center justify-between text-xs mb-2">
+                      <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <Building2 className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                        Connected Stores
+                      </span>
+                      <span className="font-extrabold text-brand-600 dark:text-brand-400">
+                        {stores.length} / {isOwner ? 'Unlimited' : planMaxStores}
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-brand-600 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, (stores.length / (isOwner ? 10 : planMaxStores)) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-2">
+                      {isOwner 
+                        ? 'Unlimited store slots available' 
+                        : `${planMaxStores - stores.length > 0 ? planMaxStores - stores.length : 0} store slot(s) remaining`}
+                    </p>
+                  </div>
+
+                  {/* SKU Product Quota */}
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700">
+                    <div className="flex items-center justify-between text-xs mb-2">
+                      <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <Layers className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                        Active SKU Calculations
+                      </span>
+                      <span className="font-extrabold text-indigo-600 dark:text-indigo-400">
+                        {stores.reduce((acc, s) => acc + (s.products?.length || 0), 0)} / {isOwner ? 'Unlimited' : SAAS_PLANS[currentPlanTier]?.maxProducts || 50}
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-indigo-600 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, (stores.reduce((acc, s) => acc + (s.products?.length || 0), 0) / (isOwner ? 100 : SAAS_PLANS[currentPlanTier]?.maxProducts || 50)) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-2">
+                      Full unit economics and break-even auditing
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Invoices List */}
+              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <CreditCard className="w-4 h-4 text-slate-400" />
+                    Billing & Payment Receipts
+                  </h4>
+                  <span className="text-[11px] text-slate-400">Powered by Stripe Billing</span>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">
+                        {isOwner ? 'Master Platform License' : `${SAAS_PLANS[currentPlanTier]?.name} Subscription`}
+                      </p>
+                      <p className="text-[11px] text-slate-400">Paid via Credit Card (•••• 4242) • Today</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-slate-900 dark:text-white">
+                        {isOwner ? '$0.00' : `$${SAAS_PLANS[currentPlanTier]?.priceMonthly || 0}.00`}
+                      </span>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">Paid ✓</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 4. SUPER-ADMIN SAAS PLATFORM HUB */}
+          {activeTab === 'saas_hub' && isOwner && (
+            <div className="space-y-6 max-w-3xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Crown className="w-4 h-4 text-amber-500" />
+                    <span>SaaS Business & Revenue Hub</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Live revenue metrics and client subscription management for RushNshop.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={refreshMetrics}
+                  className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                >
+                  <RotateCw className="w-3.5 h-3.5" />
+                  <span>Refresh Revenue</span>
+                </button>
+              </div>
+
+              {/* Revenue Metric Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-200 dark:border-emerald-900/60 bg-white dark:bg-slate-900">
+                  <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                    <TrendingUp className="w-4 h-4" />
+                    Monthly Recurring Revenue
+                  </p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white mt-1.5">
+                    ${metrics?.totalMRR || 0}
+                    <span className="text-xs font-bold text-slate-400 ml-1">/ mo</span>
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-1">Live active subscriber billing</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-brand-500/10 to-transparent border border-brand-200 dark:border-brand-900/60 bg-white dark:bg-slate-900">
+                  <p className="text-xs font-bold text-brand-700 dark:text-brand-400 flex items-center gap-1.5">
+                    <Users className="w-4 h-4" />
+                    Paying Subscribers
+                  </p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white mt-1.5">
+                    {metrics?.activeSubscribers || 0}
+                    <span className="text-xs font-bold text-slate-400 ml-1">accounts</span>
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Starter ({metrics?.planBreakdown?.starter || 0}) • Pro ({metrics?.planBreakdown?.pro || 0}) • Agency ({metrics?.planBreakdown?.agency || 0})
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-transparent border border-indigo-200 dark:border-indigo-900/60 bg-white dark:bg-slate-900">
+                  <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4" />
+                    Total Managed Stores
+                  </p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-white mt-1.5">
+                    {stores.length}
+                    <span className="text-xs font-bold text-slate-400 ml-1">stores</span>
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-1">Across all client workspaces</p>
+                </div>
+              </div>
+
+              {/* Client Subscription Management Table */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Tenant Accounts & Plan Allocations ({users.length})
+                </h4>
+
+                <div className="space-y-2.5">
+                  {users.map((u) => {
+                    const isUserOwner = u.role === 'owner';
+                    const userTier = isUserOwner ? 'lifetime_owner' : (u.subscription?.tier || 'starter');
+
+                    return (
+                      <div
+                        key={u.id}
+                        className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-850 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.name)}`}
+                            alt={u.name}
+                            className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 shrink-0 border border-slate-200 dark:border-slate-700"
+                          />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                                {u.name}
+                              </p>
+                              <span className={cn(
+                                "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border",
+                                userTier === 'agency'
+                                  ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border-purple-200"
+                                  : userTier === 'pro'
+                                  ? "bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-300 border-brand-200"
+                                  : userTier === 'starter'
+                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border-blue-200"
+                                  : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-200"
+                              )}>
+                                {userTier}
+                              </span>
+                              {u.isLocked && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-200">
+                                  Locked
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-0.5">{u.email}</p>
+                          </div>
+                        </div>
+
+                        {/* Admin Action Controls */}
+                        {!isUserOwner && (
+                          <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+                            {/* Plan Change Selector */}
+                            <select
+                              value={userTier}
+                              onChange={async (e) => {
+                                const newTier = e.target.value as SubscriptionTier;
+                                setIsUpgradingUser(u.id);
+                                try {
+                                  await apiClient.upgradeSubscription(u.id, newTier);
+                                  await refreshMetrics();
+                                  showToast('Plan Updated', `Changed ${u.name}'s subscription to ${newTier.toUpperCase()}.`, 'success');
+                                } catch (err: any) {
+                                  showToast('Update Failed', err.message || 'Cannot update tier.', 'error');
+                                } finally {
+                                  setIsUpgradingUser(null);
+                                }
+                              }}
+                              disabled={isUpgradingUser === u.id}
+                              className="px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-brand-500"
+                            >
+                              <option value="trial">7-Day Trial (1 Store)</option>
+                              <option value="starter">Starter ($29/mo - 1 Store)</option>
+                              <option value="pro">Pro ($79/mo - 3 Stores)</option>
+                              <option value="agency">Agency ($199/mo - 10 Stores)</option>
+                            </select>
+
+                            {/* Lock Toggle */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleLock(u.id, u.name, Boolean(u.isLocked))}
+                              className={cn(
+                                "px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors",
+                                u.isLocked 
+                                  ? "bg-amber-50 text-amber-700 border-amber-200" 
+                                  : "bg-slate-50 text-slate-600 border-slate-200"
+                              )}
+                            >
+                              {u.isLocked ? 'Unlock' : 'Lock'}
+                            </button>
+
+                            {/* Delete */}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteUser(u.id, u.name)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/60 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
           {(activeTab === 'costs' || activeTab === 'general' || activeTab === 'rules') && (
             <div className={activeTab === 'costs' ? 'block' : activeTab === 'general' ? 'block pt-6 border-t border-slate-100 dark:border-slate-800' : 'block'}>
               {activeTab === 'costs' && (

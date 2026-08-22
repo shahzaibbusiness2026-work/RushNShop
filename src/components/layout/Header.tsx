@@ -61,8 +61,12 @@ export default function Header({
   const {
     currentUser,
     setAuthModalOpen,
+    setUpgradeModalOpen,
     canAccessStore,
+    canAddStore,
     canManageUsers,
+    currentPlanTier,
+    planMaxStores,
     logout,
     isOwner
   } = useAuth();
@@ -102,6 +106,21 @@ export default function Header({
     }, 600);
   };
 
+  const handleAddStoreClick = () => {
+    setStoreDropdownOpen(false);
+    const accessibleCount = stores.filter(s => canAccessStore(s.id)).length;
+    if (!canAddStore(accessibleCount)) {
+      showToast(
+        'Store Limit Reached',
+        `Your ${currentPlanTier.toUpperCase()} plan allows up to ${planMaxStores} store(s). Please upgrade to add more.`,
+        'warning'
+      );
+      setUpgradeModalOpen(true);
+      return;
+    }
+    setAddStoreModalOpen(true);
+  };
+
   return (
     <header className="sticky top-0 z-30 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-4 lg:px-8 flex items-center justify-between transition-colors">
       {/* Left: Mobile menu toggle + Search bar */}
@@ -109,13 +128,25 @@ export default function Header({
         {/* Mobile menu toggle */}
         <button
           onClick={onMobileMenuClick}
-          className="lg:hidden p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
-          aria-label="Open navigation menu"
+          className="lg:hidden p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          aria-label="Open sidebar"
         >
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Global Search */}
+        {/* Sidebar Collapse button for Desktop */}
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="hidden lg:flex p-2 text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+        )}
+
+        {/* Search / Command trigger */}
         <button
           onClick={() => setCommandMenuOpen(true)}
           className="w-full flex items-center px-3.5 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100/80 dark:hover:bg-slate-700/60 border border-slate-200/70 dark:border-slate-700/70 rounded-xl text-slate-400 dark:text-slate-500 text-sm transition-all shadow-2xs group"
@@ -127,8 +158,29 @@ export default function Header({
         </button>
       </div>
 
-      {/* Right actions: Theme Toggle, Store selector, Refresh, Notifications, Profile */}
+      {/* Right actions: SaaS Plan Badge, Theme Toggle, Store selector, Refresh, Notifications, Profile */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* SaaS Subscription Plan Badge */}
+        <button
+          onClick={() => setUpgradeModalOpen(true)}
+          title="Manage SaaS Plan & Store Quota"
+          className={cn(
+            "hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shadow-2xs",
+            isOwner
+              ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+              : currentPlanTier === 'agency'
+              ? "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+              : currentPlanTier === 'pro'
+              ? "bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-800"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-brand-500"
+          )}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+          <span className="uppercase tracking-wider text-[10px]">
+            {isOwner ? '👑 Master Owner' : `${currentPlanTier} Plan`}
+          </span>
+        </button>
+
         {/* Dark & Bright Theme Toggle Button */}
         <button
           onClick={toggleTheme}
@@ -159,7 +211,7 @@ export default function Header({
           {storeDropdownOpen && (
             <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100">
               <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                <span>Your TikTok Stores ({stores.filter(s => canAccessStore(s.id)).length})</span>
+                <span>Your TikTok Stores ({stores.filter(s => canAccessStore(s.id)).length}/{planMaxStores})</span>
               </div>
               <div className="space-y-1 max-h-64 overflow-y-auto">
                 {stores
@@ -178,32 +230,19 @@ export default function Header({
                         : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                     )}
                   >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <Store className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <div className="truncate min-w-0">
-                        <p className="truncate font-bold text-slate-900 dark:text-white">{store.name}</p>
-                        <p className="text-[10px] text-slate-400 font-normal">{store.handle || store.region} • {store.currencySymbol}{store.currency}</p>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center text-[10px] font-bold shrink-0">
+                        {store.region}
+                      </div>
+                      <div className="truncate">
+                        <p className="font-semibold truncate leading-tight text-slate-900 dark:text-white">{store.name}</p>
+                        <p className="text-[10px] text-slate-400 truncate">{store.handle}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <div className="flex items-center gap-1.5">
                       {activeStoreId === store.id && (
-                        <Check className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0" />
-                      )}
-                      {stores.length > 1 && canManageUsers && (
-                        <button
-                          type="button"
-                          title={`Delete store "${store.name}"`}
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            if (window.confirm(`Are you sure you want to remove store "${store.name}" and its product data?`)) {
-                              await deleteStore(store.id);
-                            }
-                          }}
-                          className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 rounded-lg transition-all"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <Check className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400 shrink-0" />
                       )}
                     </div>
                   </div>
@@ -213,14 +252,17 @@ export default function Header({
               {canManageUsers && (
                 <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800">
                   <button
-                    onClick={() => {
-                      setStoreDropdownOpen(false);
-                      setAddStoreModalOpen(true);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/50 transition-colors text-left"
+                    type="button"
+                    onClick={handleAddStoreClick}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/50 transition-colors text-left"
                   >
-                    <Plus className="w-4 h-4" />
-                    <span>+ Add TikTok Store</span>
+                    <span className="flex items-center gap-1.5">
+                      <Plus className="w-4 h-4" />
+                      <span>+ Add TikTok Store</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-normal">
+                      {stores.filter(s => canAccessStore(s.id)).length}/{planMaxStores}
+                    </span>
                   </button>
                 </div>
               )}

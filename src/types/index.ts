@@ -2,14 +2,54 @@ export type ProfitHealthStatus = 'excellent' | 'good' | 'low' | 'loss';
 
 export type UserRole = 'owner' | 'admin' | 'store_manager' | 'viewer';
 
+export type SubscriptionTier = 'trial' | 'starter' | 'pro' | 'agency' | 'lifetime_owner';
+export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
+
+export interface UserSubscription {
+  tier: SubscriptionTier;
+  status: SubscriptionStatus;
+  maxStores: number;
+  maxProducts: number;
+  expiresAt?: string;
+  stripeCustomerId?: string;
+  billingInterval?: 'monthly' | 'annual';
+}
+
+export interface SubscriptionPlan {
+  id: SubscriptionTier;
+  name: string;
+  tagline: string;
+  priceMonthly: number;
+  priceAnnual: number;
+  maxStores: number;
+  maxProducts: number;
+  features: string[];
+  popular?: boolean;
+  badge?: string;
+}
+
+export interface SaaSMetrics {
+  totalMRR: number;
+  activeSubscribers: number;
+  planBreakdown: {
+    starter: number;
+    pro: number;
+    agency: number;
+    trial: number;
+  };
+  totalStores: number;
+}
+
 export interface UserAccount {
   id: string;
+  organizationId?: string;
   name: string;
   email: string;
   password?: string;
   role: UserRole;
   avatar?: string;
   assignedStoreIds: string[]; // ['*'] for all stores, or array of store IDs
+  subscription?: UserSubscription;
   isLocked?: boolean;
   createdAt: string;
   lastLogin?: string;
@@ -171,6 +211,7 @@ export interface MonthlyDataPoint {
 
 export interface StoreInfo {
   id: string;
+  organizationId?: string;
   name: string;
   handle: string;
   region: 'US' | 'UK' | 'EU' | 'CA' | 'AU' | 'GLOBAL';
