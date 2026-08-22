@@ -899,7 +899,7 @@
     }
   ],
   "activeStoreId": "store-1",
-  "updatedAt": "2026-08-22T20:22:23.212Z",
+  "updatedAt": "2026-08-22T20:45:23.835Z",
   "users": [
     {
       "id": "user-admin",
@@ -912,7 +912,15 @@
         "*"
       ],
       "isLocked": false,
-      "createdAt": "2026-08-22T19:58:51.692Z"
+      "createdAt": "2026-08-22T19:58:51.692Z",
+      "subscription": {
+        "tier": "pro",
+        "status": "active",
+        "maxStores": 3,
+        "maxProducts": 250,
+        "billingInterval": "monthly",
+        "expiresAt": "2026-09-21T20:45:23.835Z"
+      }
     },
     {
       "id": "user-manager",

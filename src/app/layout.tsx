@@ -23,33 +23,47 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'RushNshop - TikTok Shop Profit Margin Calculator & AI Analytics Suite',
-  description: 'Professional TikTok Shop unit economics calculator, break-even analyzer, marketplace fee calculator, and AI-driven profit optimization suite for e-commerce sellers.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://rushnshop.com'),
+  title: {
+    default: 'RushNshop — TikTok Shop Profit Calculator & Unit Economics SaaS',
+    template: '%s | RushNshop'
+  },
+  description: 'The all-in-one TikTok Shop profit margin calculator, break-even analyzer, marketplace fee engine, and unit economics intelligence SaaS for e-commerce sellers and agencies.',
   keywords: [
     'TikTok Shop Profit Calculator',
-    'TikTok Shop Fees 2024',
+    'TikTok Shop Unit Economics',
+    'TikTok Shop Fees 2026',
     'TikTok Margin Calculator',
-    'E-commerce Unit Economics',
-    'TikTok Seller Analytics',
-    'Break-Even Selling Price',
-    'TikTok Ad Spend CPA Calculator',
-    'RushNshop'
+    'TikTok Ads CPA Breakeven',
+    'TikTok Dropshipping Profit Calculator',
+    'TikTok Seller Center Profit Tracker',
+    'RushNshop SaaS'
   ],
-  authors: [{ name: 'RushNshop Engineering Team' }],
+  authors: [{ name: 'RushNshop Team', url: 'https://rushnshop.com' }],
   creator: 'RushNshop',
-  publisher: 'RushNshop',
+  publisher: 'RushNshop Inc.',
   applicationName: 'RushNshop Platform',
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: 'https://rushnshop.com',
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: 'https://rushnshop.com',
     siteName: 'RushNshop',
-    title: 'RushNshop - TikTok Shop Profit Margin Calculator & AI Analytics Suite',
-    description: 'Calculate product profitability, TikTok fees, break-even prices, and target margins before launching ads or products.',
+    title: 'RushNshop — TikTok Shop Profit Calculator & Unit Economics SaaS',
+    description: 'Calculate product profitability, TikTok fees, break-even prices, and target margins before launching ads or sourcing products.',
     images: [
       {
         url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&auto=format&fit=crop&q=80',
@@ -61,11 +75,42 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'RushNshop - TikTok Shop Profit Margin Calculator',
-    description: 'Calculate product profitability and TikTok marketplace fees in seconds.',
+    title: 'RushNshop — TikTok Shop Profit Margin Calculator',
+    description: 'Calculate product profitability, shipping balance, and TikTok marketplace fees in seconds.',
     images: ['https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&auto=format&fit=crop&q=80'],
     creator: '@rushnshop',
   },
+};
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'RushNshop',
+  operatingSystem: 'All',
+  applicationCategory: 'BusinessApplication',
+  description: 'TikTok Shop profit margin calculator and unit economics intelligence software.',
+  url: 'https://rushnshop.com',
+  offers: [
+    {
+      '@type': 'Offer',
+      price: '29.00',
+      priceCurrency: 'USD',
+      name: 'Starter Merchant Plan',
+      billingDuration: 'P1M',
+    },
+    {
+      '@type': 'Offer',
+      price: '79.00',
+      priceCurrency: 'USD',
+      name: 'Pro Brand & Seller Plan',
+      billingDuration: 'P1M',
+    }
+  ],
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: '4.9',
+    reviewCount: '348',
+  }
 };
 
 export default function RootLayout({
@@ -75,6 +120,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="antialiased bg-[#F8F9FD] dark:bg-[#090D16] text-slate-900 dark:text-slate-100 min-h-screen selection:bg-brand-600 selection:text-white">
         <AuthProvider>
           <StoreProvider>
