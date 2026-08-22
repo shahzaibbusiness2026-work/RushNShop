@@ -17,7 +17,8 @@ import {
   AlertTriangle,
   Sun,
   Moon,
-  Plus
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { cn } from '@/lib/utils';
@@ -40,6 +41,7 @@ export default function Header({
     activeStore, 
     activeStoreInfo,
     setActiveStore, 
+    deleteStore,
     toasts, 
     unreadNotificationCount, 
     markNotificationsRead,
@@ -140,34 +142,54 @@ export default function Header({
           </button>
 
           {storeDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100">
               <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
                 <span>TikTok Stores ({stores.length})</span>
               </div>
-              <div className="space-y-1 max-h-60 overflow-y-auto">
+              <div className="space-y-1 max-h-64 overflow-y-auto">
                 {stores.map((store) => (
-                  <button
+                  <div
                     key={store.id}
                     onClick={() => {
                       setActiveStore(store.id);
                       setStoreDropdownOpen(false);
                     }}
                     className={cn(
-                      "w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors text-left group",
+                      "w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors text-left group cursor-pointer",
                       activeStoreId === store.id
                         ? "bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 font-semibold"
                         : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                     )}
                   >
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <Store className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <div className="truncate">
+                      <div className="truncate min-w-0">
                         <p className="truncate font-bold text-slate-900 dark:text-white">{store.name}</p>
                         <p className="text-[10px] text-slate-400 font-normal">{store.handle || store.region} • {store.currencySymbol}{store.currency}</p>
                       </div>
                     </div>
-                    {activeStoreId === store.id && <Check className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0 ml-1" />}
-                  </button>
+
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      {activeStoreId === store.id && (
+                        <Check className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0" />
+                      )}
+                      {stores.length > 1 && (
+                        <button
+                          type="button"
+                          title={`Delete store "${store.name}"`}
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Are you sure you want to remove store "${store.name}" and its product data?`)) {
+                              await deleteStore(store.id);
+                            }
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 rounded-lg transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
 

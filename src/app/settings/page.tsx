@@ -11,17 +11,33 @@ import {
   Save,
   Store,
   Sliders,
-  CheckCircle2
+  CheckCircle2,
+  Trash2,
+  Plus,
+  AlertTriangle,
+  ArrowRight,
+  Check
 } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { StoreSettings } from '@/types';
 import { cn } from '@/lib/utils';
+import AddStoreModal from '@/components/layout/AddStoreModal';
 
 export default function SettingsPage() {
-  const { settings, updateSettings, resetSettings, showToast } = useStore();
+  const { 
+    settings, 
+    updateSettings, 
+    resetSettings, 
+    stores, 
+    activeStoreId, 
+    setActiveStore, 
+    deleteStore, 
+    showToast 
+  } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'costs' | 'rules' | 'ai'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'stores' | 'costs' | 'rules' | 'ai'>('general');
   const [formData, setFormData] = useState<StoreSettings>({ ...settings });
+  const [addStoreModalOpen, setAddStoreModalOpen] = useState(false);
 
   React.useEffect(() => {
     setFormData({ ...settings });
@@ -44,8 +60,19 @@ export default function SettingsPage() {
     setFormData({ ...settings });
   };
 
+  const handleDeleteStore = async (id: string, name: string) => {
+    if (stores.length <= 1) {
+      showToast('Cannot Delete', 'You must have at least one active store.', 'error');
+      return;
+    }
+    if (window.confirm(`Are you sure you want to permanently delete "${name}" and all its saved products?`)) {
+      await deleteStore(id);
+    }
+  };
+
   const tabs = [
     { id: 'general', label: 'General' },
+    { id: 'stores', label: `Manage Stores (${stores.length})` },
     { id: 'costs', label: 'Costs & Fees' },
     { id: 'rules', label: 'Profit Rules' },
     { id: 'ai', label: 'AI Settings' },
@@ -161,6 +188,121 @@ export default function SettingsPage() {
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-brand-500"
                   />
                 </div>
+              </div>
+
+              {/* Danger Zone: Remove Store if multiple stores exist */}
+              {stores.length > 1 && (
+                <div className="pt-6 mt-6 border-t border-slate-200 dark:border-slate-800">
+                  <div className="p-4 rounded-2xl bg-rose-50/50 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h4 className="text-xs font-bold text-rose-800 dark:text-rose-400 flex items-center gap-1.5">
+                        <AlertTriangle className="w-4 h-4" />
+                        Danger Zone: Delete Active Store
+                      </h4>
+                      <p className="text-[11px] text-rose-700/80 dark:text-rose-400/70 mt-0.5">
+                        Permanently remove <strong>{formData.storeName}</strong> and all its calculations from the system.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteStore(activeStoreId, formData.storeName)}
+                      className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete Store</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 2. STORES MANAGEMENT TAB */}
+          {activeTab === 'stores' && (
+            <div className="space-y-6 max-w-3xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">TikTok Store Portfolio</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Manage, switch between, or permanently remove your regional store profiles.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAddStoreModalOpen(true)}
+                  className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 self-start sm:self-auto transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Add TikTok Store</span>
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {stores.map((s) => {
+                  const isActive = s.id === activeStoreId;
+                  return (
+                    <div
+                      key={s.id}
+                      className={cn(
+                        "p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4",
+                        isActive 
+                          ? "bg-brand-50/50 dark:bg-brand-950/40 border-brand-200 dark:border-brand-800/80 ring-1 ring-brand-500/20" 
+                          : "bg-white dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600"
+                      )}
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-slate-900 text-tiktok-cyan flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                          {s.region || 'TT'}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{s.name}</h4>
+                            {isActive && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0">
+                                ● Active Store
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            {s.handle || `@${s.name.toLowerCase()}`} • Region: <strong>{s.region}</strong> • Currency: <strong>{s.currencySymbol} {s.currency}</strong> • {s.products?.length || 0} Products
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                        {!isActive && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveStore(s.id);
+                              showToast('Store Switched', `Now managing "${s.name}".`, 'info');
+                            }}
+                            className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1"
+                          >
+                            <span>Switch</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          disabled={stores.length <= 1}
+                          onClick={() => handleDeleteStore(s.id, s.name)}
+                          title={stores.length <= 1 ? "Cannot delete the only remaining store" : `Remove "${s.name}"`}
+                          className={cn(
+                            "px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors",
+                            stores.length <= 1 
+                              ? "opacity-30 cursor-not-allowed text-slate-400" 
+                              : "text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 border border-rose-200/60 dark:border-rose-900/60"
+                          )}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Remove</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -391,6 +533,12 @@ export default function SettingsPage() {
           </div>
         </form>
       </div>
+
+      {/* Add Store Modal */}
+      <AddStoreModal
+        isOpen={addStoreModalOpen}
+        onClose={() => setAddStoreModalOpen(false)}
+      />
     </div>
   );
 }
