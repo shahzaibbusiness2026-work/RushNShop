@@ -6,6 +6,7 @@ import Header from './Header';
 import CommandMenu from './CommandMenu';
 import ToastContainer from './ToastContainer';
 import AiAssistantDrawer from '../ai/AiAssistantDrawer';
+import AuthModal from '../auth/AuthModal';
 import { cn } from '@/lib/utils';
 
 const LOCAL_STORAGE_KEY_COLLAPSED = 'rushnshop_sidebar_collapsed_v1';
@@ -62,6 +63,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Global Modals & Drawers */}
       <CommandMenu />
       <AiAssistantDrawer />
+      <AuthModal />
       <ToastContainer />
     </div>
   );

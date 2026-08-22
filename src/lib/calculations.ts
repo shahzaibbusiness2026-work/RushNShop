@@ -23,19 +23,24 @@ export function calculateProductProfit(
   const sellingPrice = Number(product.sellingPrice) || 0;
   const costPrice = Number(product.costPrice) || 0;
   const shippingCost = Number(product.shippingCost ?? settings.defaultShippingCost) || 0;
+  const shippingCharge = Number(product.shippingCharge ?? settings.defaultShippingCharge ?? 0) || 0;
   const packagingCost = Number(product.packagingCost ?? settings.defaultPackagingCost) || 0;
   const otherProductCost = Number(product.otherProductCost) || 0;
 
-  // Fee rates
+  // Gross Revenue (Product Price + Customer Shipping Charge)
+  const revenue = sellingPrice + shippingCharge;
+  const netShippingBalance = shippingCharge - shippingCost;
+
+  // Fee rates (TikTok takes commission & transaction fee on Total Order Value)
   const commRate = Number(product.tiktokCommissionPercent ?? settings.tiktokCommissionPercent) || 0;
   const transRate = Number(product.transactionFeePercent ?? settings.transactionFeePercent) || 0;
   const affRate = Number(product.affiliatePercent ?? settings.defaultAffiliatePercent) || 0;
   const totalFeePercent = commRate + transRate + affRate;
 
-  // Fees in currency
-  const commissionFee = (sellingPrice * commRate) / 100;
-  const transactionFee = (sellingPrice * transRate) / 100;
-  const affiliateFee = (sellingPrice * affRate) / 100;
+  // Fees in currency based on gross order revenue
+  const commissionFee = (revenue * commRate) / 100;
+  const transactionFee = (revenue * transRate) / 100;
+  const affiliateFee = (sellingPrice * affRate) / 100; // Creator affiliates take cut on product price
   const tiktokFeesTotal = commissionFee + transactionFee + affiliateFee;
 
   // Marketing
@@ -49,10 +54,10 @@ export function calculateProductProfit(
   const productCostTotal = costPrice + shippingCost + packagingCost + otherProductCost;
   const totalCostPerOrder = productCostTotal + tiktokFeesTotal + marketingTotal + customExpenses;
 
-  const revenue = sellingPrice;
   const netProfit = revenue - totalCostPerOrder;
   const profitMarginPercent = revenue > 0 ? (netProfit / revenue) * 100 : 0;
   const costPercent = revenue > 0 ? (totalCostPerOrder / revenue) * 100 : 0;
+  const roiPercent = totalCostPerOrder > 0 ? (netProfit / totalCostPerOrder) * 100 : 0;
 
   // Fixed costs (all non-% fees)
   const fixedCosts = productCostTotal + marketingTotal + customExpenses;
@@ -116,10 +121,10 @@ export function calculateProductProfit(
     },
     {
       label: 'Good balance of costs',
-      passed: costPercent <= 65 && productCostTotal <= sellingPrice * 0.5,
+      passed: costPercent <= 65 && productCostTotal <= (sellingPrice > 0 ? sellingPrice : 1) * 0.5,
       detail: costPercent <= 65 
-        ? `Costs account for ${costPercent.toFixed(1)}% of selling price`
-        : `Costs take up ${costPercent.toFixed(1)}% of price, leaving tight room for ads`,
+        ? `Costs account for ${costPercent.toFixed(1)}% of order revenue`
+        : `Costs take up ${costPercent.toFixed(1)}% of revenue, leaving tight room for ads`,
     }
   ];
 
@@ -143,6 +148,8 @@ export function calculateProductProfit(
   return {
     baseCost: costPrice,
     shippingCost,
+    shippingCharge,
+    netShippingBalance,
     packagingCost,
     otherProductCost,
     productCostTotal,
@@ -157,10 +164,12 @@ export function calculateProductProfit(
     marketingTotal,
     customExpenses,
     revenue,
+    productRevenue: sellingPrice,
     totalCostPerOrder,
     netProfit,
     profitMarginPercent,
     costPercent,
+    roiPercent,
     breakEvenSellingPrice,
     maxAffordableAdCost,
     recommendedSellingPrice,

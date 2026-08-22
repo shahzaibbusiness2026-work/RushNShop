@@ -1,5 +1,20 @@
 export type ProfitHealthStatus = 'excellent' | 'good' | 'low' | 'loss';
 
+export type UserRole = 'owner' | 'admin' | 'store_manager' | 'viewer';
+
+export interface UserAccount {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  role: UserRole;
+  avatar?: string;
+  assignedStoreIds: string[]; // ['*'] for all stores, or array of store IDs
+  isLocked?: boolean;
+  createdAt: string;
+  lastLogin?: string;
+}
+
 export interface ProductItem {
   id: string;
   name: string;
@@ -8,7 +23,8 @@ export interface ProductItem {
   image: string;
   // Costs
   costPrice: number;
-  shippingCost: number;
+  shippingCost: number; // Seller carrier / 3PL cost
+  shippingCharge?: number; // Customer shipping charged at checkout
   packagingCost: number;
   otherProductCost: number;
   // Fees (Percentages)
@@ -36,6 +52,8 @@ export interface CalculationResult {
   // Line items
   baseCost: number;
   shippingCost: number;
+  shippingCharge: number;
+  netShippingBalance: number;
   packagingCost: number;
   otherProductCost: number;
   productCostTotal: number;
@@ -57,11 +75,13 @@ export interface CalculationResult {
   customExpenses: number;
 
   // Overall
-  revenue: number;
+  revenue: number; // Product Price + Customer Shipping Charge
+  productRevenue: number;
   totalCostPerOrder: number;
   netProfit: number;
   profitMarginPercent: number;
   costPercent: number;
+  roiPercent: number;
 
   // Pro Metrics from blueprint
   breakEvenSellingPrice: number;
@@ -86,6 +106,7 @@ export interface StoreSettings {
   currencySymbol: string;
   tiktokCommissionPercent: number;
   defaultShippingCost: number;
+  defaultShippingCharge?: number;
   defaultPackagingCost: number;
   transactionFeePercent: number;
   defaultAffiliatePercent: number;
@@ -155,6 +176,7 @@ export interface StoreInfo {
   region: 'US' | 'UK' | 'EU' | 'CA' | 'AU' | 'GLOBAL';
   currency: string;
   currencySymbol: string;
+  ownerId?: string;
   settings: StoreSettings;
   products: ProductItem[];
   listings: ListingItem[];

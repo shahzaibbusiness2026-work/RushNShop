@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { AuthProvider } from '@/context/AuthContext';
 import { StoreProvider } from '@/context/StoreContext';
 import AppShell from '@/components/layout/AppShell';
 
@@ -75,11 +76,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <body className="antialiased bg-[#F8F9FD] dark:bg-[#090D16] text-slate-900 dark:text-slate-100 min-h-screen selection:bg-brand-600 selection:text-white">
-        <StoreProvider>
-          <AppShell>
-            {children}
-          </AppShell>
-        </StoreProvider>
+        <AuthProvider>
+          <StoreProvider>
+            <AppShell>
+              {children}
+            </AppShell>
+          </StoreProvider>
+        </AuthProvider>
       </body>
     </html>
   );

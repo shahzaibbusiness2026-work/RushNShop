@@ -1,11 +1,37 @@
 import fs from 'fs';
 import path from 'path';
-import { StoreInfo, ProductItem, ListingItem, OrderEconomics, StoreSettings, MonthlyDataPoint } from '@/types';
+import { StoreInfo, ProductItem, ListingItem, OrderEconomics, StoreSettings, MonthlyDataPoint, UserAccount } from '@/types';
 import { INITIAL_STORES } from '@/lib/defaultData';
 import { DEFAULT_SETTINGS } from '@/lib/calculations';
 
+export const DEFAULT_USERS: UserAccount[] = [
+  {
+    id: 'user-admin',
+    name: 'Admin Owner',
+    email: 'admin@rushnshop.com',
+    password: 'admin123',
+    role: 'owner',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    assignedStoreIds: ['*'],
+    isLocked: false,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'user-manager',
+    name: 'TikTok Store Manager',
+    email: 'manager@rushnshop.com',
+    password: 'manager123',
+    role: 'store_manager',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    assignedStoreIds: ['store-1'],
+    isLocked: false,
+    createdAt: new Date().toISOString(),
+  },
+];
+
 interface DatabaseSchema {
   stores: StoreInfo[];
+  users: UserAccount[];
   activeStoreId: string;
   updatedAt: string;
 }
@@ -35,6 +61,9 @@ function getDbPaths(): { dir: string; file: string } {
 
 function ensureDbFile(): DatabaseSchema {
   if (inMemoryCache) {
+    if (!Array.isArray(inMemoryCache.users)) {
+      inMemoryCache.users = [...DEFAULT_USERS];
+    }
     return inMemoryCache;
   }
 
@@ -49,6 +78,9 @@ function ensureDbFile(): DatabaseSchema {
       const content = fs.readFileSync(file, 'utf-8');
       const parsed = JSON.parse(content) as DatabaseSchema;
       if (parsed && Array.isArray(parsed.stores) && parsed.stores.length > 0) {
+        if (!Array.isArray(parsed.users) || parsed.users.length === 0) {
+          parsed.users = [...DEFAULT_USERS];
+        }
         inMemoryCache = parsed;
         return inMemoryCache;
       }
@@ -59,6 +91,7 @@ function ensureDbFile(): DatabaseSchema {
 
   const initialData: DatabaseSchema = {
     stores: INITIAL_STORES,
+    users: [...DEFAULT_USERS],
     activeStoreId: INITIAL_STORES[0].id,
     updatedAt: new Date().toISOString(),
   };
@@ -301,6 +334,7 @@ export const serverDb = {
         image: product.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&auto=format&fit=crop&q=80',
         costPrice: Number(product.costPrice) || 0,
         shippingCost: Number(product.shippingCost ?? store.settings.defaultShippingCost) || 0,
+        shippingCharge: Number(product.shippingCharge ?? store.settings.defaultShippingCharge ?? 0) || 0,
         packagingCost: Number(product.packagingCost ?? store.settings.defaultPackagingCost) || 0,
         otherProductCost: Number(product.otherProductCost) || 0,
         tiktokCommissionPercent: Number(product.tiktokCommissionPercent ?? store.settings.tiktokCommissionPercent) || 0,
@@ -388,5 +422,78 @@ export const serverDb = {
 
     writeDb(db);
     return store.settings;
+  },
+
+  // Users & Team Management
+  getUsers(): UserAccount[] {
+    const db = ensureDbFile();
+    return db.users;
+  },
+
+  getUserById(userId: string): UserAccount | undefined {
+    const db = ensureDbFile();
+    return db.users.find(u => u.id === userId);
+  },
+
+  getUserByEmail(email: string): UserAccount | undefined {
+    const db = ensureDbFile();
+    return db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  },
+
+  saveUser(userData: Partial<UserAccount>): UserAccount {
+    const db = ensureDbFile();
+    const now = new Date().toISOString();
+    let savedUser: UserAccount;
+
+    const existingIndex = userData.id 
+      ? db.users.findIndex(u => u.id === userData.id)
+      : db.users.findIndex(u => u.email.toLowerCase() === (userData.email || '').toLowerCase());
+
+    if (existingIndex >= 0) {
+      savedUser = {
+        ...db.users[existingIndex],
+        ...userData,
+      } as UserAccount;
+      db.users[existingIndex] = savedUser;
+    } else {
+      savedUser = {
+        id: userData.id || `user-${Date.now()}`,
+        name: userData.name || 'Team Member',
+        email: (userData.email || '').toLowerCase().trim(),
+        password: userData.password || 'password123',
+        role: userData.role || 'store_manager',
+        avatar: userData.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name || 'Member')}`,
+        assignedStoreIds: userData.assignedStoreIds || ['*'],
+        isLocked: userData.isLocked || false,
+        createdAt: now,
+      };
+      db.users.push(savedUser);
+    }
+
+    writeDb(db);
+    return savedUser;
+  },
+
+  deleteUser(userId: string): boolean {
+    const db = ensureDbFile();
+    // Cannot delete the primary owner
+    const target = db.users.find(u => u.id === userId);
+    if (!target || target.role === 'owner') {
+      return false;
+    }
+    db.users = db.users.filter(u => u.id !== userId);
+    writeDb(db);
+    return true;
+  },
+
+  toggleUserLock(userId: string, isLocked: boolean): UserAccount | undefined {
+    const db = ensureDbFile();
+    const user = db.users.find(u => u.id === userId);
+    if (!user) return undefined;
+    if (user.role !== 'owner') {
+      user.isLocked = isLocked;
+      writeDb(db);
+    }
+    return user;
   }
 };

@@ -109,5 +109,76 @@ export const apiClient = {
     if (!res.ok) throw new Error('Failed updating settings');
     const data = await res.json();
     return data.settings;
+  },
+
+  // Users & Auth
+  async getUsers(): Promise<UserAccount[]> {
+    const res = await fetch('/api/users', { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed fetching users');
+    const data = await res.json();
+    return data.users;
+  },
+
+  async saveUser(user: Partial<UserAccount>): Promise<UserAccount> {
+    const res = await fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(user),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed saving user' }));
+      throw new Error(err.message || 'Failed saving user');
+    }
+    const data = await res.json();
+    return data.user;
+  },
+
+  async deleteUser(userId: string): Promise<boolean> {
+    const res = await fetch(`/api/users?id=${userId}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed deleting user' }));
+      throw new Error(err.message || 'Failed deleting user');
+    }
+    return res.ok;
+  },
+
+  async toggleUserLock(userId: string, isLocked: boolean): Promise<UserAccount> {
+    const res = await fetch('/api/users', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, isLocked }),
+    });
+    if (!res.ok) throw new Error('Failed updating user lock state');
+    const data = await res.json();
+    return data.user;
+  },
+
+  async login(email: string, password: string): Promise<UserAccount> {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Invalid credentials' }));
+      throw new Error(err.message || 'Invalid credentials');
+    }
+    const data = await res.json();
+    return data.user;
+  },
+
+  async register(payload: { name: string; email: string; password: string; role?: string; assignedStoreIds?: string[] }): Promise<UserAccount> {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'register', ...payload }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Failed creating account' }));
+      throw new Error(err.message || 'Failed creating account');
+    }
+    const data = await res.json();
+    return data.user;
   }
 };
+

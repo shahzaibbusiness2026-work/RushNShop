@@ -352,6 +352,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const image = p.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&auto=format&fit=crop&q=80';
     const costPrice = Number(p.costPrice) || 0;
     const shippingCost = Number(p.shippingCost) || 0;
+    const shippingCharge = Number(p.shippingCharge ?? settings.defaultShippingCharge ?? 0) || 0;
     const packagingCost = Number(p.packagingCost) || 0;
     const otherProductCost = Number(p.otherProductCost) || 0;
     const sellingPrice = Number(p.sellingPrice) || 0;
@@ -363,13 +364,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const otherMarketingCost = Number(p.otherMarketingCost) || 0;
     const customExpenses = Number(p.customExpenses) || 0;
 
+    const grossRevenue = sellingPrice + shippingCharge;
     const totalProductCost = costPrice + shippingCost + packagingCost + otherProductCost;
-    const totalFeesPercent = tiktokCommissionPercent + transactionFeePercent + affiliatePercent;
-    const totalFeeAmount = (sellingPrice * totalFeesPercent) / 100;
+    const totalFeesPercent = tiktokCommissionPercent + transactionFeePercent;
+    const totalFeeAmount = ((grossRevenue * totalFeesPercent) + (sellingPrice * affiliatePercent)) / 100;
     const totalMarketingCost = tiktokAdsCost + creatorCost + otherMarketingCost;
     const totalAllCost = totalProductCost + totalFeeAmount + totalMarketingCost + customExpenses;
-    const netProfit = sellingPrice - totalAllCost;
-    const profitMarginPercent = sellingPrice > 0 ? (netProfit / sellingPrice) * 100 : 0;
+    const netProfit = grossRevenue - totalAllCost;
+    const profitMarginPercent = grossRevenue > 0 ? (netProfit / grossRevenue) * 100 : 0;
 
     let status: 'excellent' | 'good' | 'low' | 'loss' = 'good';
     if (netProfit < 0) status = 'loss';
@@ -385,6 +387,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       image,
       costPrice,
       shippingCost,
+      shippingCharge,
       packagingCost,
       otherProductCost,
       tiktokCommissionPercent,

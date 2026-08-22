@@ -16,12 +16,21 @@ import {
   Plus,
   AlertTriangle,
   ArrowRight,
-  Check
+  Check,
+  Users,
+  Lock,
+  Unlock,
+  UserPlus,
+  Shield,
+  Mail,
+  Key
 } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
-import { StoreSettings } from '@/types';
+import { useAuth } from '@/context/AuthContext';
+import { StoreSettings, UserRole } from '@/types';
 import { cn } from '@/lib/utils';
 import AddStoreModal from '@/components/layout/AddStoreModal';
+import AddUserModal from '@/components/team/AddUserModal';
 
 export default function SettingsPage() {
   const { 
@@ -35,9 +44,19 @@ export default function SettingsPage() {
     showToast 
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'stores' | 'costs' | 'rules' | 'ai'>('general');
+  const {
+    currentUser,
+    users,
+    deleteUser,
+    toggleLockUser,
+    canManageUsers,
+    isOwner
+  } = useAuth();
+
+  const [activeTab, setActiveTab] = useState<'general' | 'stores' | 'team' | 'costs' | 'rules' | 'ai'>('general');
   const [formData, setFormData] = useState<StoreSettings>({ ...settings });
   const [addStoreModalOpen, setAddStoreModalOpen] = useState(false);
+  const [addUserModalOpen, setAddUserModalOpen] = useState(false);
 
   React.useEffect(() => {
     setFormData({ ...settings });
@@ -70,9 +89,31 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (window.confirm(`Are you sure you want to remove user "${userName}"? Their access will be revoked.`)) {
+      try {
+        await deleteUser(userId);
+        showToast('User Removed', `User "${userName}" has been removed.`, 'info');
+      } catch (err: any) {
+        showToast('Action Failed', err.message || 'Cannot delete this user.', 'error');
+      }
+    }
+  };
+
+  const handleToggleLock = async (userId: string, userName: string, currentLocked: boolean) => {
+    const nextState = !currentLocked;
+    await toggleLockUser(userId, nextState);
+    showToast(
+      nextState ? 'Profile Locked' : 'Profile Unlocked',
+      `User "${userName}" profile ${nextState ? 'has been locked' : 'is now active'}.`,
+      'info'
+    );
+  };
+
   const tabs = [
     { id: 'general', label: 'General' },
-    { id: 'stores', label: `Manage Stores (${stores.length})` },
+    { id: 'stores', label: `Stores (${stores.length})` },
+    { id: 'team', label: `Users & Team (${users.length})` },
     { id: 'costs', label: 'Costs & Fees' },
     { id: 'rules', label: 'Profit Rules' },
     { id: 'ai', label: 'AI Settings' },
@@ -300,6 +341,137 @@ export default function SettingsPage() {
                           <span>Remove</span>
                         </button>
                       </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 3. TEAM & USERS MANAGEMENT TAB */}
+          {activeTab === 'team' && (
+            <div className="space-y-6 max-w-4xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Team Members & Client Accounts</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Invite teammates, grant access to specific regional stores with individual emails and passwords, or lock sensitive profiles.
+                  </p>
+                </div>
+                {canManageUsers && (
+                  <button
+                    type="button"
+                    onClick={() => setAddUserModalOpen(true)}
+                    className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 self-start sm:self-auto transition-all"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>+ Add Team Member</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {users.map((u) => {
+                  const isCurrent = currentUser?.id === u.id;
+                  const isUserOwner = u.role === 'owner';
+                  return (
+                    <div
+                      key={u.id}
+                      className={cn(
+                        "p-4 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4",
+                        isCurrent
+                          ? "bg-brand-50/40 dark:bg-brand-950/30 border-brand-200 dark:border-brand-800 ring-1 ring-brand-500/20"
+                          : "bg-white dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80 hover:border-slate-300"
+                      )}
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <img
+                          src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.name)}`}
+                          alt={u.name}
+                          className="w-11 h-11 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{u.name}</h4>
+                            
+                            {/* Role Badge */}
+                            <span className={cn(
+                              "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                              u.role === 'owner' 
+                                ? "bg-purple-50 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                                : u.role === 'admin'
+                                ? "bg-blue-50 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                                : u.role === 'store_manager'
+                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                            )}>
+                              {u.role.replace('_', ' ')}
+                            </span>
+
+                            {isCurrent && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800 shrink-0">
+                                You
+                              </span>
+                            )}
+
+                            {u.isLocked && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 flex items-center gap-1 shrink-0">
+                                <Lock className="w-2.5 h-2.5" />
+                                Locked Profile
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1 flex-wrap">
+                            <span className="flex items-center gap-1">
+                              <Mail className="w-3.5 h-3.5 text-slate-400" />
+                              {u.email}
+                            </span>
+                            <span>•</span>
+                            <span>
+                              Store Scope: <strong>
+                                {u.assignedStoreIds?.includes('*') 
+                                  ? 'All Stores' 
+                                  : `${u.assignedStoreIds?.length || 0} Assigned Store(s)`}
+                              </strong>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      {canManageUsers && !isUserOwner && (
+                        <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+                          {/* Lock / Unlock Toggle */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleLock(u.id, u.name, Boolean(u.isLocked))}
+                            title={u.isLocked ? "Unlock this profile" : "Lock this profile"}
+                            className={cn(
+                              "px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border",
+                              u.isLocked
+                                ? "bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                                : "bg-slate-50 text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                            )}
+                          >
+                            {u.isLocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                            <span>{u.isLocked ? 'Unlock' : 'Lock Profile'}</span>
+                          </button>
+
+                          {/* Remove User */}
+                          {!isCurrent && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteUser(u.id, u.name)}
+                              title={`Remove user "${u.name}"`}
+                              className="px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 border border-rose-200/60 dark:border-rose-900/60 flex items-center gap-1 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Remove</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -538,6 +710,12 @@ export default function SettingsPage() {
       <AddStoreModal
         isOpen={addStoreModalOpen}
         onClose={() => setAddStoreModalOpen(false)}
+      />
+
+      {/* Add User Modal */}
+      <AddUserModal
+        isOpen={addUserModalOpen}
+        onClose={() => setAddUserModalOpen(false)}
       />
     </div>
   );
