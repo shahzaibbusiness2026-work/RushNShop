@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 248 249 253;
+    --foreground: 15 23 42;
+    --card: 255 255 255;
+    --border: 226 232 240;
+  }
+
+  .dark {
+    --background: 9 13 22;
+    --foreground: 248 250 252;
+    --card: 15 23 42;
+    --border: 30 41 59;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: #F8F9FD;
+    color: #0F172A;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  .dark body {
+    background-color: #090D16;
+    color: #F8FAFC;
+  }
+
+  /* Accessible focus ring */
+  *:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #6366F1, 0 0 0 4px rgba(99, 102, 241, 0.25);
+  }
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Global Selection */
+::selection {
+  background-color: #6366F1;
+  color: #FFFFFF;
+}
+
+/* Card hover micro-transitions */
+.shadow-card {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+}
+
+.shadow-card-hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+}
+
+/* Print report styling */
+@media print {
+  aside, header, .no-print, button, .ai-drawer {
+    display: none !important;
+  }
+  
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+  }
+  
+  .print-page {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
